@@ -1,3 +1,535 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Berner – Le quiz du bureau</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bleu: #1d4e89;
+    --bleu-fonce: #0f2d52;
+    --bleu-clair: #3b7dd8;
+    --jaune: #ffc93c;
+    --rouge: #d64545;
+    --vert: #2e9e5b;
+    --fond: #f0f4fb;
+    --blanc: #ffffff;
+    --texte: #1a2332;
+    --gris: #64748b;
+    --bordure: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--fond);
+    color: var(--texte);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    background: linear-gradient(135deg, var(--bleu-fonce) 0%, var(--bleu) 50%, var(--bleu-clair) 100%);
+    color: #fff;
+    padding: 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: "";
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.1) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .header-content {
+    position: relative;
+    padding: 1.8rem 1rem 1.4rem;
+    z-index: 1;
+  }
+  header h1 {
+    margin: 0 0 .3rem;
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -.3px;
+  }
+  header .sous-titre {
+    font-size: .9rem;
+    opacity: .85;
+    margin-bottom: 1rem;
+    font-weight: 500;
+  }
+  .header-photo {
+    max-width: 100%;
+    width: 100%;
+    max-width: 520px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 18px;
+    border: 3px solid rgba(255,255,255,.2);
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    display: block;
+    margin: 0 auto;
+  }
+
+  main { max-width: 560px; margin: 0 auto; padding: 1.2rem 1rem 2rem; }
+
+  /* ===== CARTES ===== */
+  .card {
+    background: var(--blanc);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 1.1rem;
+    box-shadow: 0 4px 24px rgba(15, 45, 82, .06);
+    border: 1px solid var(--bordure);
+    animation: apparition .45s cubic-bezier(.2,.8,.2,1);
+  }
+  .card h2 {
+    margin: 0 0 .7rem;
+    font-size: 1.2rem;
+    color: var(--bleu-fonce);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .card h3 {
+    margin: 1.2rem 0 .6rem;
+    font-size: .95rem;
+    color: var(--gris);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 700;
+  }
+
+  @keyframes apparition {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* ===== FORMULAIRES ===== */
+  input {
+    width: 100%;
+    font-size: 1.05rem;
+    padding: .9rem 1.1rem;
+    border-radius: 14px;
+    border: 2px solid var(--bordure);
+    outline: none;
+    transition: all .2s;
+    font-family: inherit;
+    background: #fafbfd;
+  }
+  input:focus {
+    border-color: var(--bleu-clair);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(59, 125, 216, .1);
+  }
+
+  /* ===== BOUTONS ===== */
+  button {
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: .9rem 1.2rem;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, var(--bleu), var(--bleu-fonce));
+    color: #fff;
+    cursor: pointer;
+    margin-top: .7rem;
+    font-family: inherit;
+    box-shadow: 0 4px 14px rgba(29, 78, 137, .25);
+    transition: transform .15s, box-shadow .15s, opacity .2s;
+  }
+  button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(29, 78, 137, .35);
+  }
+  button:active:not(:disabled) { transform: translateY(0); }
+  button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+
+  /* ===== OPTIONS DE RÉPONSE ===== */
+  .option {
+    background: #f8fafc;
+    color: var(--texte);
+    text-align: left;
+    font-weight: 500;
+    box-shadow: none;
+    border: 2px solid var(--bordure);
+    margin: .5rem 0;
+    padding: 1rem 1.2rem;
+    position: relative;
+    transition: all .2s;
+  }
+  .option:hover:not(:disabled) {
+    background: #edf3fc;
+    border-color: var(--bleu-clair);
+    transform: translateX(4px);
+  }
+  .option.bon {
+    background: #e7f8ec;
+    border-color: var(--vert);
+    color: #14532d;
+  }
+  .option.faux {
+    background: #fdecec;
+    border-color: var(--rouge);
+    color: #7f1d1d;
+  }
+
+  /* ===== BOUTONS SPÉCIAUX ===== */
+  .btn-son {
+    width: auto;
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    color: #fff;
+    box-shadow: none;
+    font-size: .85rem;
+    padding: .5rem 1.1rem;
+    border: 1px solid rgba(255,255,255,.3);
+    margin-top: .8rem;
+    backdrop-filter: blur(8px);
+    font-weight: 500;
+  }
+  .btn-son:hover:not(:disabled) {
+    background: rgba(255,255,255,.25);
+    transform: translateY(-1px);
+    box-shadow: none;
+  }
+
+  .btn-discret {
+    background: transparent;
+    color: var(--gris);
+    box-shadow: none;
+    border: 1.5px dashed #cbd5e1;
+    font-weight: 500;
+    font-size: .88rem;
+    margin-top: .5rem;
+  }
+  .btn-discret:hover:not(:disabled) {
+    color: var(--bleu);
+    border-color: var(--bleu);
+    background: #f5f8fd;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .btn-reset {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    box-shadow: 0 4px 14px rgba(214, 69, 69, .3);
+  }
+  .btn-secondaire {
+    background: #eef2f9;
+    color: var(--bleu-fonce);
+    box-shadow: none;
+    border: 1px solid var(--bordure);
+  }
+  .btn-secondaire:hover:not(:disabled) {
+    background: #e3eaf5;
+    box-shadow: none;
+  }
+
+  /* ===== ROUE ===== */
+  #roue {
+    display: block;
+    margin: .8rem auto .4rem;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* ===== QR ===== */
+  #qr { display: flex; justify-content: center; margin: .8rem 0; }
+  #qr img {
+    border-radius: 14px;
+    border: 6px solid #fff;
+    box-shadow: 0 6px 20px rgba(0,0,0,.12);
+  }
+
+  /* ===== TABLEAU ===== */
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th {
+    text-align: left;
+    color: var(--gris);
+    font-weight: 700;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: .6rem .5rem;
+    border-bottom: 2px solid var(--bordure);
+  }
+  td { padding: .75rem .5rem; border-bottom: 1px solid #f1f5f9; }
+  tbody tr:first-child td { font-weight: 700; color: var(--bleu-fonce); }
+
+  /* ===== GAGE ===== */
+  .gage {
+    background: linear-gradient(135deg, var(--jaune), #ffb703);
+    color: #3b2a00;
+    font-weight: 700;
+    text-align: center;
+    padding: 1.1rem;
+    border-radius: 16px;
+    margin: .6rem 0;
+    box-shadow: 0 6px 18px rgba(255, 183, 3, .3);
+    font-size: 1rem;
+  }
+
+  /* ===== RÉSULTAT ===== */
+  .resultat-titre {
+    font-size: 1.5rem;
+    color: var(--bleu-fonce);
+    margin: 0 0 .4rem;
+    font-weight: 800;
+  }
+  .classement p {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: .65rem 1rem;
+    margin: .45rem 0;
+    font-size: .92rem;
+    border-left: 3px solid var(--bleu-clair);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .classement p:nth-child(1) { border-left-color: #fbbf24; background: #fffbeb; }
+  .classement p:nth-child(2) { border-left-color: #cbd5e1; }
+  .classement p:nth-child(3) { border-left-color: #d97706; }
+
+  /* ===== PROGRESSION ===== */
+  .progression-barre {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: .6rem;
+  }
+  .progression-remplie {
+    height: 100%;
+    background: linear-gradient(90deg, var(--bleu-clair), var(--bleu));
+    border-radius: 3px;
+    transition: width .4s ease;
+  }
+  .progression {
+    color: var(--gris);
+    font-size: .82rem;
+    margin: 0 0 .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+
+  #feedback {
+    font-weight: 700;
+    min-height: 1.5rem;
+    margin-top: .6rem;
+    font-size: 1rem;
+  }
+  .feedback-bon { color: var(--vert); }
+  .feedback-faux { color: var(--rouge); }
+
+  .note {
+    font-size: .87rem;
+    color: var(--gris);
+    margin: .2rem 0 .8rem;
+    line-height: 1.5;
+  }
+
+  .hidden { display: none !important; }
+
+  /* ===== GALERIE PHOTOS ===== */
+  .galerie {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: .6rem;
+    margin-top: .8rem;
+  }
+  .galerie-item {
+    position: relative;
+    aspect-ratio: 4/3;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #f1f5f9;
+    border: 1px solid var(--bordure);
+  }
+  .galerie-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .3s;
+  }
+  .galerie-item:hover img { transform: scale(1.05); }
+  .galerie-item .placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #94a3b8;
+    font-size: .75rem;
+    text-align: center;
+    padding: .5rem;
+    gap: .3rem;
+  }
+  .galerie-item .placeholder span { font-size: 1.5rem; }
+  .galerie-legende {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,.65));
+    color: #fff;
+    padding: 1.2rem .6rem .5rem;
+    font-size: .78rem;
+    font-weight: 600;
+  }
+
+  /* ===== BADGE ===== */
+  .badge {
+    display: inline-block;
+    background: #e0ecff;
+    color: var(--bleu);
+    font-size: .75rem;
+    font-weight: 700;
+    padding: .25rem .6rem;
+    border-radius: 999px;
+    margin-left: auto;
+  }
+
+  @media (max-width: 400px) {
+    header h1 { font-size: 1.3rem; }
+    .card { padding: 1.2rem; }
+    .galerie { gap: .5rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-content">
+    <h1>🏭 Berner – Le quiz du bureau</h1>
+    <p class="sous-titre">Testez vos connaissances en équipe !</p>
+    <!-- Remplace Photo/berner-1.jpg par une vraie photo de l'entreprise si besoin -->
+    <img src="Photo/berner-1.jpg" alt="L'équipe Berner" class="header-photo" onerror="this.style.display='none'">
+    <br>
+    <button class="btn-son" onclick="toggleMusique()">🔇 Musique : off</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===== VUE SALARIÉ ===== -->
+  <section id="vue-joueur">
+
+    <div class="card" id="roue-carte">
+      <h2>🎡 La roue du gage <span class="badge">Avant la 1ère partie</span></h2>
+      <p class="note">Lancez la roue : elle désigne le gage du perdant du jour.</p>
+      <canvas id="roue" width="300" height="300"></canvas>
+      <p id="roue-texte" class="gage hidden"></p>
+      <button id="btn-roue" onclick="lancerRoue()">🎲 Lancer la roue</button>
+      <button id="btn-continuer" class="btn-secondaire hidden" onclick="afficherInscription()">Continuer →</button>
+    </div>
+
+    <div class="card" id="inscription">
+      <h2>👋 Qui joue ?</h2>
+      <p class="note">Entre ton prénom pour commencer la partie.</p>
+      <input id="prenom" placeholder="Ton prénom" maxlength="20" autocomplete="off">
+      <button onclick="demarrer()">C'est parti ! 🚀</button>
+    </div>
+
+    <div class="card hidden" id="quiz">
+      <div class="progression-barre">
+        <div class="progression-remplie" id="progression-remplie" style="width: 0%"></div>
+      </div>
+      <p id="progression" class="progression"></p>
+      <h2 id="question"></h2>
+      <div id="reponses"></div>
+      <p id="feedback"></p>
+    </div>
+
+    <div class="card hidden" id="resultat">
+      <h2 id="score-final" class="resultat-titre"></h2>
+      <p id="message-final"></p>
+      <button onclick="startPartie()">🔄 Rejouer</button>
+      <h3>🏆 Classement du jour</h3>
+      <div id="classement-joueur" class="classement"></div>
+    </div>
+
+    <!-- Galerie photos de l'entreprise -->
+    <div class="card">
+      <h2>📸 L'entreprise Berner en images</h2>
+      <p class="note">Découvrez l'univers Berner à travers quelques photos.</p>
+      <div class="galerie">
+        <div class="galerie-item">
+          <img src="Photo/berner-1.jpg" alt="L'équipe Berner" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          <div class="placeholder" style="display:none"><span>🏢</span>Photo/berner-1.jpg</div>
+          <div class="galerie-legende">L'équipe Berner</div>
+        </div>
+        <div class="galerie-item">
+          <img src="Photo/berner-2.jpg" alt="Les locaux" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          <div class="placeholder" style="display:none"><span>🏭</span>Photo/berner-2.jpg</div>
+          <div class="galerie-legende">Les locaux</div>
+        </div>
+        <div class="galerie-item">
+          <img src="Photo/berner-3.jpg" alt="L'entrepôt" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          <div class="placeholder" style="display:none"><span>📦</span>Photo/berner-3.jpg</div>
+          <div class="galerie-legende">L'entrepôt</div>
+        </div>
+        <div class="galerie-item">
+          <img src="Photo/berner-4.jpg" alt="Les produits" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          <div class="placeholder" style="display:none"><span>🔧</span>Photo/berner-4.jpg</div>
+          <div class="galerie-legende">Les produits</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center">
+      <button class="btn-discret" onclick="ouvrirEspaceResponsable()">🔐 Espace responsable</button>
+    </div>
+  </section>
+
+  <!-- ===== VUE RESPONSABLE ===== -->
+  <section id="vue-admin" class="hidden">
+
+    <div class="card">
+      <h2>📱 Scanner pour jouer</h2>
+      <div id="qr"></div>
+      <p class="note" style="text-align:center">Affiche ce QR code dans le bureau.</p>
+    </div>
+
+    <div class="card">
+      <h2>🏆 Classement du jour</h2>
+      <p class="note">Classement par moyenne de bonnes réponses, pour que tout le monde soit à égalité.</p>
+      <table>
+        <thead><tr><th>Prénom</th><th>Moyenne</th><th>Parties</th></tr></thead>
+        <tbody id="tableau"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>🎯 Gage de fin de journée</h2>
+      <p id="gage-texte" class="gage">Aucun joueur pour le moment</p>
+    </div>
+
+    <div class="card">
+      <h2>⚠️ Réinitialiser</h2>
+      <p class="note">Efface les scores et la roue du jour. Le code admin est demandé.</p>
+      <button class="btn-reset" onclick="reinitialiser()">🗑️ Réinitialiser la journée</button>
+      <button class="btn-secondaire" onclick="retourJeu()">← Retour au quiz</button>
+    </div>
+
+  </section>
+
+</main>
+
+<script>
+// ---------- Réglages admin ----------
+const CODE_ADMIN = "1234";
+
+// ---------- Banque de questions enrichie ----------
 const QUESTIONS = [
   // --- Histoire de Berner ---
   { q: "En quelle année Albert Berner a-t-il fondé la quincaillerie d'origine ?", r: ["1947", "1957", "1967", "1977"], bonne: 1 },
@@ -42,3 +574,371 @@ const QUESTIONS = [
   { q: "Quel est le but d'une « réunion de brief » ?", r: ["Cadrer un projet et donner les consignes", "Manger ensemble", "Signer un contrat", "Faire le point sur les congés"], bonne: 0 },
   { q: "Qu'est-ce qu'un « brainstorming » ?", r: ["Une séance de production d'idées collective", "Un exercice physique", "Une réunion comptable", "Un test technique"], bonne: 0 }
 ];
+
+const QUESTIONS_PAR_PARTIE = 5;
+
+// ---------- Gages ----------
+const GAGES = [
+  { texte: "Apporter les croissants demain matin 🥐", court: "Croissants 🥐" },
+  { texte: "Faire le café pendant une demi-journée ☕", court: "Café ☕" },
+  { texte: "Chanter le jingle de l'entreprise à la prochaine réunion 🎤", court: "Jingle 🎤" },
+  { texte: "Choisir la musique de la prochaine pause 🎶", court: "Playlist 🎶" },
+  { texte: "Offrir un bonbon à tout le monde 🍬", court: "Bonbons 🍬" },
+  { texte: "Porter un chapeau toute la matinée 🎩", court: "Chapeau 🎩" },
+  { texte: "Gérer la photo de groupe de la semaine 📸", court: "Photo 📸" },
+  { texte: "Pas de gage cette fois, tu as de la chance ! 🎉", court: "Chance 🎉" }
+];
+const COULEURS = ["#ff6b6b", "#ffd93d", "#6bcb77", "#4d96ff", "#c780fa", "#ff9f43", "#48dbfb", "#f78fb3"];
+
+// ---------- Audio ----------
+let audioCtx = null, musiqueOn = false, musiqueTimer = null, pasNote = 0;
+const MELODIE = [523, 659, 784, 659, 523, 587, 698, 587, 523, 659, 784, 880, 784, 659, 587, 523];
+
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+}
+
+function note(freq, debut, duree, type = "triangle", vol = 0.15) {
+  const t = audioCtx.currentTime + debut;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.001, t + duree);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(t);
+  o.stop(t + duree + 0.05);
+}
+
+function jouerMusique() {
+  if (!audioCtx || !musiqueOn) return;
+  note(MELODIE[pasNote % MELODIE.length], 0, 0.35, "triangle", 0.07);
+  pasNote++;
+}
+
+function setMusique(on) {
+  musiqueOn = on;
+  document.querySelectorAll(".btn-son").forEach(b =>
+    b.textContent = on ? "🎵 Musique : on" : "🔇 Musique : off");
+  if (on) {
+    initAudio();
+    if (!musiqueTimer) musiqueTimer = setInterval(jouerMusique, 350);
+  } else {
+    clearInterval(musiqueTimer);
+    musiqueTimer = null;
+  }
+}
+
+function toggleMusique() { setMusique(!musiqueOn); }
+
+function sonBon() {
+  if (!audioCtx || !musiqueOn) return;
+  note(784, 0, 0.12, "sine", 0.2);
+  note(1047, 0.12, 0.2, "sine", 0.2);
+}
+
+function sonRate() {
+  if (!audioCtx || !musiqueOn) return;
+  note(200, 0, 0.3, "sawtooth", 0.08);
+}
+
+function sonFin() {
+  if (!audioCtx || !musiqueOn) return;
+  [523, 659, 784, 1047].forEach((f, i) => note(f, i * 0.15, 0.3, "square", 0.08));
+}
+
+// ---------- Stockage ----------
+const jour = new Date().toISOString().slice(0, 10);
+const cle = "berner-quiz-" + jour;
+const cleGage = "berner-gage-" + jour;
+
+function lireDonnees() { return JSON.parse(localStorage.getItem(cle) || "{}"); }
+function sauverDonnees(d) { localStorage.setItem(cle, JSON.stringify(d)); }
+function gageDuJour() { return localStorage.getItem(cleGage); }
+function sauverGageDuJour(texte) { localStorage.setItem(cleGage, texte); }
+
+function melanger(tab) { return [...tab].sort(() => Math.random() - 0.5); }
+
+// ---------- Roue ----------
+const CENTRE = 150, RAYON = 140;
+let rotCourante = 0, roueEnCours = false;
+
+function dessinerRoue() {
+  const c = document.getElementById("roue");
+  if (!c) return;
+  const ctx = c.getContext("2d");
+  const n = GAGES.length, S = 2 * Math.PI / n;
+  ctx.clearRect(0, 0, 300, 300);
+
+  ctx.save();
+  ctx.translate(CENTRE, CENTRE);
+  ctx.rotate(rotCourante);
+  GAGES.forEach((g, k) => {
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, RAYON, k * S, (k + 1) * S);
+    ctx.closePath();
+    ctx.fillStyle = COULEURS[k % COULEURS.length];
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.rotate(k * S + S / 2);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#1f2937";
+    ctx.font = "bold 12px system-ui";
+    ctx.fillText(g.court, RAYON - 14, 4);
+    ctx.restore();
+  });
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.arc(CENTRE, CENTRE, 14, 0, 2 * Math.PI);
+  ctx.fillStyle = "#fff";
+  ctx.fill();
+  ctx.strokeStyle = "#1d4e89";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(CENTRE - 13, 2);
+  ctx.lineTo(CENTRE + 13, 2);
+  ctx.lineTo(CENTRE, 28);
+  ctx.closePath();
+  ctx.fillStyle = "#1d4e89";
+  ctx.fill();
+}
+
+function lancerRoue() {
+  if (roueEnCours) return;
+  roueEnCours = true;
+  document.getElementById("btn-roue").disabled = true;
+
+  const n = GAGES.length, S = 2 * Math.PI / n;
+  const idx = Math.floor(Math.random() * n);
+  const cibleAngle = 3 * Math.PI / 2 - (idx * S + S / 2);
+  const reste = ((cibleAngle - (rotCourante % (2 * Math.PI))) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+  const debut = rotCourante;
+  const fin = debut + 6 * 2 * Math.PI + reste;
+  const duree = 4000, t0 = performance.now();
+
+  function frame(now) {
+    const t = Math.min((now - t0) / duree, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    rotCourante = debut + (fin - debut) * ease;
+    dessinerRoue();
+    if (t < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      rotCourante = fin;
+      terminerRoue(GAGES[idx].texte);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function terminerRoue(texte) {
+  sauverGageDuJour(texte);
+  roueEnCours = false;
+  const p = document.getElementById("roue-texte");
+  p.textContent = `🎯 Gage du jour : ${texte}`;
+  p.classList.remove("hidden");
+  document.getElementById("btn-continuer").classList.remove("hidden");
+}
+
+function afficherInscription() {
+  document.getElementById("roue-carte").classList.add("hidden");
+  document.getElementById("inscription").classList.remove("hidden");
+}
+
+function initRoue() {
+  if (gageDuJour()) {
+    document.getElementById("roue-carte").classList.add("hidden");
+    document.getElementById("inscription").classList.remove("hidden");
+  } else {
+    document.getElementById("inscription").classList.add("hidden");
+    document.getElementById("roue-carte").classList.remove("hidden");
+    dessinerRoue();
+  }
+}
+
+// ---------- Vue joueur ----------
+let joueur = "", joueurKey = "", questions = [], index = 0, score = 0;
+
+function demarrer() {
+  const saisie = document.getElementById("prenom").value.trim();
+  if (!saisie) return alert("Dis-nous ton prénom !");
+  joueur = saisie;
+  joueurKey = saisie.toLowerCase();
+  document.getElementById("inscription").classList.add("hidden");
+  setMusique(true);
+  startPartie();
+}
+
+function startPartie() {
+  questions = melanger(QUESTIONS).slice(0, QUESTIONS_PAR_PARTIE);
+  index = 0; score = 0;
+  document.getElementById("resultat").classList.add("hidden");
+  document.getElementById("quiz").classList.remove("hidden");
+  afficherQuestion();
+}
+
+function afficherQuestion() {
+  const q = questions[index];
+  document.getElementById("progression").textContent = `Question ${index + 1} / ${questions.length}`;
+  document.getElementById("progression-remplie").style.width = `${(index / questions.length) * 100}%`;
+  document.getElementById("question").textContent = q.q;
+  document.getElementById("feedback").textContent = "";
+  const zone = document.getElementById("reponses");
+  zone.innerHTML = "";
+  q.r.forEach((texte, i) => {
+    const b = document.createElement("button");
+    b.className = "option";
+    b.textContent = texte;
+    b.onclick = () => repondre(i);
+    zone.appendChild(b);
+  });
+}
+
+function repondre(i) {
+  const q = questions[index];
+  const boutons = document.querySelectorAll("#reponses button");
+  boutons.forEach(b => b.disabled = true);
+  if (i === q.bonne) {
+    score++;
+    boutons[i].classList.add("bon");
+    document.getElementById("feedback").textContent = "Bravo ! 🎉";
+    document.getElementById("feedback").className = "feedback-bon";
+    sonBon();
+  } else {
+    boutons[i].classList.add("faux");
+    boutons[q.bonne].classList.add("bon");
+    document.getElementById("feedback").textContent = "Raté ! 😅";
+    document.getElementById("feedback").className = "feedback-faux";
+    sonRate();
+  }
+  setTimeout(() => {
+    index++;
+    index < questions.length ? afficherQuestion() : finirPartie();
+  }, 1400);
+}
+
+function finirPartie() {
+  const donnees = lireDonnees();
+  if (!donnees[joueurKey]) donnees[joueurKey] = { prenom: joueur, parties: [] };
+  donnees[joueurKey].parties.push({
+    score,
+    total: questions.length,
+    ts: Date.now(),
+    heure: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+  });
+  sauverDonnees(donnees);
+  sonFin();
+
+  const stats = calculer(donnees[joueurKey]);
+  document.getElementById("quiz").classList.add("hidden");
+  document.getElementById("resultat").classList.remove("hidden");
+  document.getElementById("score-final").textContent =
+    `${joueur} : ${score} / ${questions.length} cette partie`;
+  document.getElementById("message-final").textContent =
+    `Ta moyenne du jour : ${stats.moyenne} % sur ${stats.parties} partie(s).`;
+
+  const classement = Object.values(donnees).map(p => ({ prenom: p.prenom, ...calculer(p) }));
+  classement.sort((a, b) => b.moyenne - a.moyenne || b.parties - a.parties);
+  document.getElementById("classement-joueur").innerHTML =
+    classement.slice(0, 5).map((s, i) => `<p><span>${i + 1}. ${s.prenom}</span> <span>${s.moyenne} % (${s.parties} partie${s.parties > 1 ? "s" : ""})</span></p>`).join("");
+}
+
+function calculer(p) {
+  const bonnes = p.parties.reduce((s, x) => s + x.score, 0);
+  const posees = p.parties.reduce((s, x) => s + x.total, 0);
+  return {
+    moyenne: posees ? Math.round(bonnes / posees * 100) : 0,
+    parties: p.parties.length,
+    dernier: Math.max(...p.parties.map(x => x.ts))
+  };
+}
+
+// ---------- Espace responsable ----------
+let timerAdmin = null;
+
+function afficherQR() {
+  const zone = document.getElementById("qr");
+  zone.innerHTML = "";
+  const url = location.href.split("?")[0];
+  if (typeof QRCode !== "undefined") {
+    new QRCode(zone, { text: url, width: 220, height: 220 });
+  } else {
+    const img = document.createElement("img");
+    img.width = 220; img.height = 220;
+    img.alt = "QR code de l'appli";
+    img.src = "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(url);
+    zone.appendChild(img);
+  }
+}
+
+function montrerAdmin() {
+  document.getElementById("vue-joueur").classList.add("hidden");
+  document.getElementById("vue-admin").classList.remove("hidden");
+  afficherQR();
+  afficherAdmin();
+  if (!timerAdmin) timerAdmin = setInterval(afficherAdmin, 10000);
+}
+
+function ouvrirEspaceResponsable() {
+  const saisie = prompt("Code responsable :");
+  if (saisie === null) return;
+  if (saisie !== CODE_ADMIN) return alert("Code incorrect.");
+  montrerAdmin();
+}
+
+function retourJeu() {
+  document.getElementById("vue-admin").classList.add("hidden");
+  document.getElementById("vue-joueur").classList.remove("hidden");
+  initRoue();
+}
+
+function afficherAdmin() {
+  const donnees = lireDonnees();
+  const liste = Object.values(donnees).map(p => ({ prenom: p.prenom, ...calculer(p) }));
+
+  const classement = [...liste].sort((a, b) => b.moyenne - a.moyenne || b.parties - a.parties);
+  document.getElementById("tableau").innerHTML = classement
+    .map(s => `<tr><td>${s.prenom}</td><td>${s.moyenne} %</td><td>${s.parties}</td></tr>`).join("");
+
+  const gage = document.getElementById("gage-texte");
+  if (liste.length === 0) {
+    gage.textContent = "Aucun joueur pour le moment";
+  } else {
+    const perdant = [...liste].sort((a, b) => a.moyenne - b.moyenne || b.dernier - a.dernier)[0];
+    const g = gageDuJour();
+    gage.textContent = g
+      ? `${perdant.prenom} doit : ${g}`
+      : `${perdant.prenom} : la roue n'a pas encore été lancée`;
+  }
+}
+
+function reinitialiser() {
+  const saisie = prompt("Code responsable :");
+  if (saisie === null) return;
+  if (saisie !== CODE_ADMIN) return alert("Code incorrect.");
+  if (!confirm("Effacer les scores du jour et la roue ?")) return;
+  localStorage.removeItem(cle);
+  localStorage.removeItem(cleGage);
+  afficherAdmin();
+  alert("Journée réinitialisée. La roue peut être relancée.");
+}
+
+// ---------- Démarrage ----------
+if (location.search.includes("admin")) {
+  ouvrirEspaceResponsable();
+} else {
+  initRoue();
+}
+</script>
+</body>
+</html>
